@@ -17,11 +17,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			);
 
 			if ( $courses && $courses->post_count ) {
-				// $this->print( "Course Count:\t" . $courses->post_count );
 
 				$courses = $courses->posts;
-				// $this->flog( wp_json_encode( $courses ) );
-				// return;
 				foreach ( $courses as $course ) {
 					$post_meta              = get_post_meta( $course->ID );
 					$_tutor_course_settings = unserialize( $post_meta['_tutor_course_settings'][0] );
@@ -75,7 +72,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					);
 
 					if ( $price_type == 'subscribe' ) {
-						// $_sfwd_courses['sfwd-courses_course_no_of_cycles'] = '';
 						$_sfwd_courses['sfwd-courses_course_price_billing_cycle'] = '';
 						$_sfwd_courses['sfwd-courses_course_price_billing_p3']    = $billing_cycle['count'];
 						$_sfwd_courses['sfwd-courses_course_price_billing_t3']    = $billing_cycle['unit'];
@@ -119,18 +115,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'ld_course_tag'      => array(),
 						),
 					);
-
 					$this->jlog( wp_json_encode( $post ), 'post_type_course' );
-
 				}
 			}
 		}
 
 		function convertDaysToWeeksMonthsAndYearsRounded( $days ) {
-			$daysPerYear  = 365.25;
-			$daysPerMonth = 30.44;
-			$daysPerWeek  = 7;
-
 			$daysPerYear  = 365;
 			$daysPerMonth = 30;
 			$daysPerWeek  = 7;
@@ -167,15 +157,16 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					'unit'  => 'D',
 				);
 			}
-			// return array("years" => $years, "months" => $months, "weeks" => $weeks, "days" => $days);
 		}
 
 		function print( $str ) {
 			echo print_r( $str, 1 ) . PHP_EOL;
 		}
+
 		function jlog( $str, $table ) {
 			file_put_contents( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $table . '.ld', $str . PHP_EOL, FILE_APPEND | LOCK_EX );
 		}
+
 		function flog( $str ) {
 			file_put_contents( trailingslashit( __DIR__ ) . 'flog.log', $str . PHP_EOL, FILE_APPEND | LOCK_EX );
 		}
