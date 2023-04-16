@@ -9,7 +9,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 		private $debug = false;
 		function __construct() {
-			wp_cache_flush();
+
 		}
 
 		function export_material() {
@@ -50,12 +50,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 					$product_id    = get_post_meta( $course->ID, '_tutor_course_product_id', 1 );
 					$product_price = get_post_meta( $product_id, '_price', true );
-					//$this->print(
-					//	array(
-					//		'product_id'    => $product_id,
-					//		'product_price' => $product_price,
-					//	)
-					//);
 
 					$_sfwd_courses =
 						array(
@@ -144,7 +138,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 				if ( file_exists( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' ) ) {
 					WP_CLI::success( 'Successfully exported ' . trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' );
-				}else {
+				} else {
 					WP_CLI::warning( 'Nothing exported.' );
 				}
 			}
@@ -203,11 +197,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'ld_lesson_tag'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), $export_type );
+					if ( $this->debug ) {
+						$this->print( wp_json_encode( $post, JSON_PRETTY_PRINT ) );
+					} else {
+						$this->jlog( wp_json_encode( $post ), $export_type );
+					}
 				}
 				if ( file_exists( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' ) ) {
 					WP_CLI::success( 'Successfully exported ' . trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' );
-				}else {
+				} else {
 					WP_CLI::warning( 'Nothing exported.' );
 				}
 			}
@@ -268,11 +266,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'ld_topic_tag'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), $export_type );
+					if ( $this->debug ) {
+						$this->print( wp_json_encode( $post, JSON_PRETTY_PRINT ) );
+					} else {
+						$this->jlog( wp_json_encode( $post ), $export_type );
+					}
 				}
 				if ( file_exists( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' ) ) {
 					WP_CLI::success( 'Successfully exported ' . trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' );
-				}else {
+				} else {
 					WP_CLI::warning( 'Nothing exported.' );
 				}
 			}
@@ -320,11 +322,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'activity_meta'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), $export_type );
+					if ( $this->debug ) {
+						$this->print( wp_json_encode( $post, JSON_PRETTY_PRINT ) );
+					} else {
+						$this->jlog( wp_json_encode( $post ), $export_type );
+					}
 				}
 				if ( file_exists( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' ) ) {
 					WP_CLI::success( 'Successfully exported ' . trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' );
-				}else {
+				} else {
 					WP_CLI::warning( 'Nothing exported.' );
 				}
 			}
