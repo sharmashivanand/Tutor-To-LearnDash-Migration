@@ -8,7 +8,16 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		function __construct() {
 		}
 
-		function list_materials() {
+		function export_material() {
+			// Tutor 		=> Course > Topic > Lesson
+			// LearnDash	=> Course > Lesson > Topic
+			$this->export_courses_to_courses(); // Courses are mapped to courses
+			$this->export_topics_to_lessons(); // Tutor Topics are mapped to Lessons
+			$this->export_lessons_to_topics(); // Tutor Lessons are mapped to topics
+			$this->export_enrollments();
+		}
+
+		function export_courses_to_courses() {
 			$courses = new WP_Query(
 				array(
 					'post_type'      => 'courses',
@@ -87,7 +96,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'post_content'          => $course->post_content,
 							'post_title'            => $course->post_title,
 							'post_excerpt'          => $course->post_excerpt,
-							'post_excerpt'          => $course->post_excerpt,
 							'post_status'           => 'publish',
 							'comment_status'        => 'closed',
 							'ping_status'           => 'closed',
@@ -119,6 +127,63 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 			}
 		}
+
+		function export_topics_to_lesson() {
+			$topics = new WP_Query(
+				array(
+					'post_type'      => 'topics',
+					'posts_per_page' => -1,
+				)
+			);
+			if ( $topics && $topics->post_count ) {
+				$topics = $topics->posts;
+				foreach ( $topics as $topic ) {
+					$post = array(
+						'wp_post'           => array(
+							'ID'                    => $topic->ID,
+							'post_author'           => $topic->post_author,
+							'post_date'             => $topic->post_date,
+							'post_content'          => $topic->post_content,
+							'post_title'            => $topic->post_title,
+							'post_excerpt'          => $topic->post_excerpt,
+							'post_status'           => 'publish',
+							'comment_status'        => 'closed',
+							'ping_status'           => 'closed',
+							'post_password'         => '',
+							'post_name'             => $topic->post_name,
+							'to_ping'               => '',
+							'pinged'                => '',
+							'post_modified'         => $topic->post_modified,
+							'post_modified_gmt'     => $topic->post_modified_gmt,
+							'post_content_filtered' => '',
+							'post_parent'           => 0,
+							'menu_order'            => $topic->menu_order,
+							'post_type'             => 'sfwd-lessons',
+							'post_mime_type'        => '',
+							'comment_count'         => '0',
+							'filter'                => 'raw',
+						),
+						'wp_post_permalink' => get_permalink( $topic->ID ),
+						'wp_post_meta'      => array(
+							'course_id'     => array( wp_get_post_parent_id( $topic->ID ) ),
+							'_sfwd-lessons' => array(
+								(object) array(
+									'0'                   => '',
+									'sfwd-lessons_course' => wp_get_post_parent_id( $topic->ID ),
+								),
+							),
+						),
+						'wp_post_terms'     => array(
+							'ld_lesson_category' => array(),
+							'ld_lesson_tag'      => array(),
+						),
+					);
+					$this->jlog( wp_json_encode( $post ), 'post_type_lesson' );
+				}
+			}
+		}
+		function export_lessons_to_topics() {}
+		function export_enrollments() {}
 
 		function convertDaysToWeeksMonthsAndYearsRounded( $days ) {
 			$daysPerYear  = 365;
@@ -164,6 +229,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		function jlog( $str, $table ) {
+			if ( ! is_dir( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv' ) ) {
+
+				wp_mkdir_p( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv' );
+			}
 			file_put_contents( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $table . '.ld', $str . PHP_EOL, FILE_APPEND | LOCK_EX );
 		}
 
@@ -172,7 +241,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 	}
-
 
 	WP_CLI::add_command( 'afc', 'T_LD_Mig' );
 }
