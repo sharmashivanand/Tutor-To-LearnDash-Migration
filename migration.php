@@ -147,7 +147,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		function export_courses_to_users() {
-			$export_type = 'post_type_course';
+			$export_type = 'users_in_course';
 			$courses     = new WP_Query(
 				array(
 					'post_type'      => 'courses',
@@ -230,20 +230,36 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						),
 
 					);
-					$children = get_children(
+					$enrollments = get_children(
 						array(
 							'post_parent' => $course->ID,
 							'numberposts' => -1,
-							'post_type'   => 'any',
+							'post_type'   => 'tutor_enrolled',
 						)
 					);
-					$this->print( $children );
-					return;
-					if ( $this->debug ) {
-						$this->print( wp_json_encode( $post, JSON_PRETTY_PRINT ) );
-					} else {
-						$this->jlog( wp_json_encode( $post ), $export_type );
+					$users    = '';
+					foreach ( $enrollments as $enrollment ) {
+						if ( $enrollment->post_status == 'completed' ) {
+							$user = get_user_by( 'id', $enrollment->post_author );
+							if ( ! $user ) {
+								$post['errors'][] = $user;
+							}
+							// $post[ 'user_' . $child->post_author ] = $user->data->display_name . ' (' . $user->data->user_login . ')';
+							$users .= "\n" . $user->data->display_name . ' (' . $user->data->user_login . ' ' . $user->data->user_email . ')' . "\t" . 'Access from: ' . $enrollment->post_date;
+							// $post['access_from'] =  $child->post_date;
+						}
 					}
+					$this->flog(
+						// 'Course: ' . 'https://ashwinflute.com/wp-admin/post.php?p=' . $course->ID . PHP_EOL . "\n" .
+						'Course Title: ' . $course->post_title . PHP_EOL . "\n" .
+						'Users: ' . $users . "\n"
+					);
+					// continue;
+					// if ( $this->debug ) {
+					// $this->print( wp_json_encode( $post, JSON_PRETTY_PRINT ) );
+					// } else {
+					// $this->jlog( wp_json_encode( $post ), $export_type );
+					// }
 				}
 				if ( file_exists( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' ) ) {
 					WP_CLI::success( 'Successfully exported ' . trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $export_type . '.ld' );
