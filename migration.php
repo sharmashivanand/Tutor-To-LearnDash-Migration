@@ -19,7 +19,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		function export_courses_to_courses() {
-			$courses = new WP_Query(
+			$export_type = 'post_type_course';
+			$courses     = new WP_Query(
 				array(
 					'post_type'      => 'courses',
 					'posts_per_page' => -1,
@@ -27,6 +28,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			);
 
 			if ( $courses && $courses->post_count ) {
+				$this->cleanup_old_exports( $export_type );
 				$courses = $courses->posts;
 				foreach ( $courses as $course ) {
 					$post_meta              = get_post_meta( $course->ID );
@@ -43,9 +45,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						$billing_cycle = $this->convertDaysToWeeksMonthsAndYearsRounded( $days );
 					}
 
-					$product_id    = $post_meta['_tutor_course_product_id'];
-					$product       = get_post_meta( $product_id, '_price', true );
-					$product_price = $product;// ->get_price();
+					$product_id    = get_post_meta( $course->ID, '_tutor_course_product_id', 1 );
+					$product_price = get_post_meta( $product_id, '_price', true );
+					$this->print(
+						array(
+							'product_id'    => $product_id,
+							'product_price' => $product_price,
+						)
+					);
+
 					$_sfwd_courses =
 						array(
 							'0'                           => '',
@@ -67,7 +75,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'sfwd-courses_course_prerequisite' => '',
 							'sfwd-courses_course_price_billing_p3' => '',
 							'sfwd-courses_course_price_billing_t3' => '',
-							'sfwd-courses_course_price_type_paynow_enrollment_url' => '',
+							'sfwd-courses_course_price_type_' . $price_type . '_enrollment_url' => '',
 							'sfwd-courses_course_price_type' => $price_type,
 							'sfwd-courses_course_price'   => $product_price,
 							'sfwd-courses_course_topic_per_page_custom' => '',
@@ -125,12 +133,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'ld_course_tag'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), 'post_type_course' );
+					$this->jlog( wp_json_encode( $post, JSON_PRETTY_PRINT ), $export_type );
 				}
 			}
 		}
 
 		function export_topics_to_lesson() {
+			$export_type = 'post_type_lesson';
 			$topics = new WP_Query(
 				array(
 					'post_type'      => 'topics',
@@ -138,6 +147,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				)
 			);
 			if ( $topics && $topics->post_count ) {
+				$this->cleanup_old_exports( $export_type );
 				$topics = $topics->posts;
 				foreach ( $topics as $topic ) {
 					$post = array(
@@ -181,12 +191,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'ld_lesson_tag'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), 'post_type_lesson' );
+					$this->jlog( wp_json_encode( $post ), $export_type );
 				}
 			}
 		}
 
 		function export_lessons_to_topics() {
+			$export_type = 'post_type_topic';
 			$lessons = new WP_Query(
 				array(
 					'post_type'      => 'lesson',
@@ -194,6 +205,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				)
 			);
 			if ( $lessons && $lessons->post_count ) {
+				$this->cleanup_old_exports( $export_type );
 				$lessons = $lessons->posts;
 				foreach ( $lessons as $lesson ) {
 					$post = array(
@@ -239,12 +251,13 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'ld_topic_tag'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), 'post_type_topic' );
+					$this->jlog( wp_json_encode( $post ), $export_type );
 				}
 			}
 		}
 
 		function export_enrollments() {
+			$export_type = 'user_activity';
 			$timestamp   = time();
 			$enrollments = new WP_Query(
 				array(
@@ -254,6 +267,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				)
 			);
 			if ( $enrollments && $enrollments->post_count ) {
+				$this->cleanup_old_exports( $export_type );
 				$enrollments = $enrollments->posts;
 				foreach ( $enrollments as $enrollment ) {
 					$post = array(
@@ -269,7 +283,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							'activity_meta'      => array(),
 						),
 					);
-					$this->jlog( wp_json_encode( $post ), 'user_activity' );
+					$this->jlog( wp_json_encode( $post ), $export_type );
 				}
 			}
 
@@ -318,9 +332,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			echo print_r( $str, 1 ) . PHP_EOL;
 		}
 
+		function cleanup_old_exports( $table ) {
+			if ( is_file( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $table . '.ld' ) ) {
+				wp_delete_file( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $table . '.ld' );
+			}
+		}
+
 		function jlog( $str, $table ) {
 			if ( ! is_dir( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv' ) ) {
-
 				wp_mkdir_p( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv' );
 			}
 			file_put_contents( trailingslashit( __DIR__ ) . '/learndash-export-ldsb-20230415-shiv/' . $table . '.ld', $str . PHP_EOL, FILE_APPEND | LOCK_EX );
